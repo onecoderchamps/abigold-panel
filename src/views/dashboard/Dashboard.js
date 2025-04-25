@@ -31,6 +31,7 @@ import {
 
 import { getDocs, collection, addDoc, updateDoc, doc, deleteDoc } from "firebase/firestore";
 import { db } from '../../api/firebase';
+import routes from '../../routes';
 
 const database = "order"
 
@@ -102,7 +103,7 @@ const Dashboard = () => {
               <br />
               {item.kurir}
               <br />
-              {item.biayaKurir}
+              Rp {item.biayaKurir.toLocaleString("id-ID")}
               <br />
               {item.alamat}
             </CCol>
@@ -135,16 +136,16 @@ const Dashboard = () => {
               Nama
               <br />
               Biaya
-              <br />
-              Donasi
+              {/* <br />
+              Donasi */}
             </CCol>
             <CCol className="text-end">
               <br />
               {item.namaProduct}
               <br />
-              Rp {item.price.toLocaleString("id-ID")}
-              <br />
-              Rp {item.biayaDonasi.toLocaleString("id-ID")}
+              Rp {(item.price + item.biayaKurir).toLocaleString("id-ID")}
+              {/* <br />
+              Rp {item.biayaDonasi.toLocaleString("id-ID")} */}
             </CCol>
           </CRow>
           <br></br>
@@ -163,11 +164,20 @@ const Dashboard = () => {
               Lanjutkan ke Kurir
             </CButton>
           }
-          {item.status === "onKurir" &&
-            <CButton color="primary" onClick={() => tarikKomisi(item.id, "selesai")}>
-              Selesai
-            </CButton>
-          }
+          <CRow>
+
+            {item.status === "onKurir" &&
+              <CButton color="primary" onClick={() => tarikKomisi(item.id, "selesai")}>
+                Selesai
+              </CButton>
+            }
+            <div style={{ margin: 20 }}></div>
+            {item.status !== "pending" &&
+              <CButton color="green" onClick={() => window.open(`/#/invoice#${item.id}`, '_blank')}>
+                Download Invoice
+              </CButton>
+            }
+          </CRow>
         </CCardBody>
       </CCard>
     )
