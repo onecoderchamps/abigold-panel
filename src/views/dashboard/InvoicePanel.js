@@ -17,15 +17,14 @@ import {
   CForm,
   CInputGroup,
   CFormInput,
-  CFormLabel,
-  CFormTextarea
+  CFormLabel
 } from '@coreui/react'
 import { getDocs, collection, addDoc, updateDoc, doc, deleteDoc } from "firebase/firestore";
 import { db } from '../../api/firebase';
 
-const database = "product"
+const database = "invoice"
 
-const RekeningScreen = () => {
+const InvoicePanelScreen = () => {
 
   const [kurir, setkurir] = useState([]);
   const [visible, setVisible] = useState(false)
@@ -35,19 +34,14 @@ const RekeningScreen = () => {
 
   const [form, setForm] = useState(
     {
-      title: '',
-      id: '',
-      nama: "",
-      batch: "",
-      pembuatan: "",
-      berat: "",
-      desc2: "",
-      desc1: "",
-      image1: "",
-      image2: "",
-      image3: "",
-      harga: 0,
-      bonus: 0
+      namaLengkap: '',
+      noKtp: '',
+      phone: '',
+      alamat: '',
+      ongkir: '',
+      total: '',
+      tanggalPembelian: '',
+      item: '',
     }
   )
 
@@ -55,7 +49,7 @@ const RekeningScreen = () => {
     const { name, value } = e.target;
     setForm((prevForm) => ({
       ...prevForm,
-      [name]: name === "harga" ? Number(value) : name === "bonus" ? Number(value) : value
+      [name]: value
     }));
   };
 
@@ -68,7 +62,6 @@ const RekeningScreen = () => {
       dataArray.push({ id: doc.id, ...doc.data() });
     });
     setkurir(dataArray);
-    console.log(dataArray)
   }
 
   const OpenAddItem = () => {
@@ -90,10 +83,14 @@ const RekeningScreen = () => {
     setvisibleDelete(!visible)
     setForm({
       id: e.id,
-      title: "Update Data",
-      bank: e.bank,
-      nama: e.nama,
-      nomor: e.nomor
+      namaLengkap: e.namaLengkap,
+      noKtp: e.noKtp,
+      phone: e.phone,
+      alamat: e.alamat,
+      ongkir: e.ongkir,
+      total: e.total,
+      tanggalPembelian: e.tanggalPembelian,
+      item: e.item
     })
   }
 
@@ -104,22 +101,51 @@ const RekeningScreen = () => {
 
 
   const DeleteItem = async () => {
-    console.log(form.id)
     try {
       await deleteDoc(doc(db, database, form.id));
       readDataFromFirestore();
     } catch (error) {
-      // console.error("Error menghapus data: ", error);
+      console.error("Error menghapus data: ", error);
     }
     setvisibleDelete(false); // Close the delete modal
   };
+
+  function generateInvoice() {
+    const today = new Date();
+
+    // Ambil 3 huruf pertama dari nama PT
+    const prefix = "ABI";
+
+    // Nomor unik (4 digit)
+    const unique = String(kurir.length + 1).padStart(4, '0');
+
+    // Bulan sekarang (2 digit)
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+
+    // Format tanggal transaksi (DDMMYYYY)
+    const day = String(today.getDate()).padStart(2, '0');
+    const year = today.getFullYear();
+    const dateCode = `${day}${month}${year}`;
+
+    return `${prefix}-${unique}-${month}-${dateCode}`;
+  }
 
   const approveUpdate = async (e) => {
     e.preventDefault(); // Prevent form submission
     if (form.title === "Tambah Data") {
       try {
         await addDoc(collection(db, database), {
-          ...form
+          invoice: generateInvoice(),
+          namaLengkap: form.namaLengkap,
+          noKtp: form.noKtp,
+          phone: form.phone,
+          alamat: form.alamat,
+          ongkir: form.ongkir,
+          total: form.total,
+          item: form.item,
+
+          tanggalPembelian: form.tanggalPembelian,
+
         });
         console.log("Data berhasil ditambahkan");
       } catch (error) {
@@ -129,7 +155,14 @@ const RekeningScreen = () => {
       try {
         const docRef = doc(db, database, form.id); // Assuming form.id contains the document ID
         await updateDoc(docRef, {
-          ...form
+          namaLengkap: form.namaLengkap,
+          noKtp: form.noKtp,
+          phone: form.phone,
+          alamat: form.alamat,
+          ongkir: form.ongkir,
+          tanggalPembelian: form.tanggalPembelian,
+          total: form.total,
+          item: form.item,
         });
         // console.log("Data berhasil diperbarui");
       } catch (error) {
@@ -146,20 +179,23 @@ const RekeningScreen = () => {
       <CRow>
         <CCol xs>
           <CCard className="mb-4">
-            <CCardHeader>Produk Aktif</CCardHeader>
+            <CCardHeader>Banner</CCardHeader>
             <CCardBody>
-              <CButton color="info" variant="outline" onClick={OpenAddItem}>Tambah</CButton>
+              <CButton color="info" variant="outline" onClick={OpenAddItem}>Tambah Invoice</CButton>
               <div className="m-2"></div>
               <CTable striped align="middle" className="mb-0 border" hover responsive>
                 <CTableHead className="text-nowrap">
                   <CTableRow>
                     <CTableHeaderCell className="bg-body-tertiary">#</CTableHeaderCell>
-                    <CTableHeaderCell className="bg-body-tertiary">Produk</CTableHeaderCell>
-                    <CTableHeaderCell className="bg-body-tertiary text-center">
-                      Nama
-                    </CTableHeaderCell>
-                    <CTableHeaderCell className="bg-body-tertiary text-center">Berat</CTableHeaderCell>
-                    <CTableHeaderCell className="bg-body-tertiary text-center">Harga</CTableHeaderCell>
+                    <CTableHeaderCell className="bg-body-tertiary">Invoice</CTableHeaderCell>
+                    <CTableHeaderCell className="bg-body-tertiary text-center">Nama Pembeli</CTableHeaderCell>
+                    <CTableHeaderCell className="bg-body-tertiary text-center">No KTP</CTableHeaderCell>
+                    <CTableHeaderCell className="bg-body-tertiary text-center">No Ponsel</CTableHeaderCell>
+                    <CTableHeaderCell className="bg-body-tertiary text-center">Alamat</CTableHeaderCell>
+                    <CTableHeaderCell className="bg-body-tertiary text-center">Nama Product</CTableHeaderCell>
+                    <CTableHeaderCell className="bg-body-tertiary text-center">Ongkir</CTableHeaderCell>
+                    <CTableHeaderCell className="bg-body-tertiary text-center">Harga Beli</CTableHeaderCell>
+                    <CTableHeaderCell className="bg-body-tertiary text-center">Tanggal Pembelian</CTableHeaderCell>
                     <CTableHeaderCell className="bg-body-tertiary text-center">Actions</CTableHeaderCell>
                   </CTableRow>
                 </CTableHead>
@@ -169,22 +205,38 @@ const RekeningScreen = () => {
                       <CTableDataCell className="text-left">
                         <div className="text-body-secondary">{index + 1}</div>
                       </CTableDataCell>
-                      <CTableDataCell className="text-left">
-                        <img src={item.image1} width={50} height={50} className="text-body-secondary" />
-                      </CTableDataCell>
-                      <CTableDataCell className="text-left">
-                        <div className="text-body-secondary">{item.nama}</div>
+                      <CTableDataCell className="text-center">
+                        <div className="text-body-secondary">{item.invoice}</div>
                       </CTableDataCell>
                       <CTableDataCell className="text-center">
-                        <div className="text-body-secondary">{item.berat}</div>
+                        <div className="text-body-secondary">{item.namaLengkap}</div>
                       </CTableDataCell>
                       <CTableDataCell className="text-center">
-                        <div className="text-body-secondary">{item.harga.toLocaleString("id-ID")}</div>
+                        <div className="text-body-secondary">{item.phone}</div>
+                      </CTableDataCell>
+                      <CTableDataCell className="text-center">
+                        <div className="text-body-secondary">{item.noKtp}</div>
+                      </CTableDataCell>
+                      <CTableDataCell className="text-center">
+                        <div className="text-body-secondary">{item.alamat}</div>
+                      </CTableDataCell>
+                      <CTableDataCell className="text-center">
+                        <div className="text-body-secondary">{item.item}</div>
+                      </CTableDataCell>
+                      <CTableDataCell className="text-center">
+                        <div className="text-body-secondary">{item.ongkir}</div>
+                      </CTableDataCell>
+                      <CTableDataCell className="text-center">
+                        <div className="text-body-secondary">{item.total}</div>
+                      </CTableDataCell>
+                      <CTableDataCell className="text-center">
+                        <div className="text-body-secondary">{item.tanggalPembelian}</div>
                       </CTableDataCell>
                       <CTableDataCell className="text-center">
                         <CButtonGroup role="group">
-                          {/* <CButton variant="outline" color="danger" onClick={() => OpenDeleteItem(item)}>Delete</CButton> */}
+                          <CButton variant="outline" color="danger" onClick={() => OpenDeleteItem(item)}>Delete</CButton>
                           <CButton variant="outline" color="success" onClick={() => OpenUpdateItem(item)}>Update</CButton>
+                          <CButton variant="outline" color="info" onClick={() => window.open(`/#/invoice#${item.id}`, '_blank')}>Cetak Invoice</CButton>
                         </CButtonGroup>
                       </CTableDataCell>
                     </CTableRow>
@@ -206,130 +258,105 @@ const RekeningScreen = () => {
           </CModalHeader>
           <CModalBody>
             <CForm onSubmit={approveUpdate}>
+              <CFormLabel htmlFor="staticEmail" className="col-sm-2 col-form-label">
+                Customer
+              </CFormLabel>
               <CInputGroup className="mb-3">
                 <CFormLabel htmlFor="staticEmail" className="col-sm-2 col-form-label">
-                  Nama Produk
+                  Nama Pembeli
                 </CFormLabel>
                 <CFormInput
-                  placeholder="........."
-                  autoComplete="nama"
-                  name="nama"
-                  value={form.nama}
+                  placeholder="Nama"
+                  autoComplete="namaLengkap"
+                  name="namaLengkap"
+                  value={form.namaLengkap}
                   onChange={handleChange}
                 />
               </CInputGroup>
               <CInputGroup className="mb-3">
                 <CFormLabel htmlFor="staticEmail" className="col-sm-2 col-form-label">
-                  Batch
+                  Nomor KTP
                 </CFormLabel>
                 <CFormInput
-                  placeholder="........."
-                  autoComplete="batch"
-                  name="batch"
-                  value={form.batch}
+                  placeholder="Ktp"
+                  autoComplete="noKtp"
+                  name="noKtp"
+                  value={form.noKtp}
                   onChange={handleChange}
                 />
               </CInputGroup>
               <CInputGroup className="mb-3">
                 <CFormLabel htmlFor="staticEmail" className="col-sm-2 col-form-label">
-                  Pembuatan
+                  Nomor Ponsel
                 </CFormLabel>
                 <CFormInput
-                  placeholder="........."
-                  autoComplete="pembuatan"
-                  name="pembuatan"
-                  value={form.pembuatan}
+                  placeholder="Ponsel"
+                  autoComplete="phone"
+                  name="phone"
+                  value={form.phone}
                   onChange={handleChange}
                 />
               </CInputGroup>
               <CInputGroup className="mb-3">
                 <CFormLabel htmlFor="staticEmail" className="col-sm-2 col-form-label">
-                  Berat
+                  Alamat
                 </CFormLabel>
                 <CFormInput
-                  placeholder="........."
-                  autoComplete="berat"
-                  name="berat"
-                  value={form.berat}
+                  placeholder="Alamat"
+                  autoComplete="alamat"
+                  name="alamat"
+                  value={form.alamat}
+                  onChange={handleChange}
+                />
+              </CInputGroup>
+              <CFormLabel htmlFor="staticEmail" className="col-sm-2 col-form-label">
+                Product
+              </CFormLabel>
+              <CInputGroup className="mb-3">
+                <CFormLabel htmlFor="staticEmail" className="col-sm-2 col-form-label">
+                  Nama Product
+                </CFormLabel>
+                <CFormInput
+                  placeholder="Product"
+                  autoComplete="item"
+                  name="item"
+                  value={form.item}
                   onChange={handleChange}
                 />
               </CInputGroup>
               <CInputGroup className="mb-3">
                 <CFormLabel htmlFor="staticEmail" className="col-sm-2 col-form-label">
-                  Harga
+                  Harga Ongkir
                 </CFormLabel>
                 <CFormInput
-                  placeholder="........."
-                  autoComplete="harga"
-                  name="harga"
-                  id="harga"
-                  value={form.harga}
+                  placeholder="Ongkir"
+                  autoComplete="ongkir"
+                  name="ongkir"
+                  value={form.ongkir}
                   onChange={handleChange}
                 />
               </CInputGroup>
               <CInputGroup className="mb-3">
                 <CFormLabel htmlFor="staticEmail" className="col-sm-2 col-form-label">
-                  Bonus
+                  Harga Pembelian
                 </CFormLabel>
                 <CFormInput
-                  placeholder="........."
-                  autoComplete="bonus"
-                  name="bonus"
-                  id="bonus"
-                  value={form.bonus}
+                  placeholder="Pembelian"
+                  autoComplete="total"
+                  name="total"
+                  value={form.total}
                   onChange={handleChange}
                 />
               </CInputGroup>
               <CInputGroup className="mb-3">
                 <CFormLabel htmlFor="staticEmail" className="col-sm-2 col-form-label">
-                  Gambar Utama
+                  Tanggal Pembelian
                 </CFormLabel>
                 <CFormInput
-                  placeholder="........."
-                  autoComplete="image1"
-                  name="image1"
-                  id="image1"
-                  value={form.image1}
-                  onChange={handleChange}
-                />
-              </CInputGroup>
-              <CInputGroup className="mb-3">
-                <CFormLabel htmlFor="staticEmail" className="col-sm-2 col-form-label">
-                  Gambar Cadangan
-                </CFormLabel>
-                <CFormInput
-                  placeholder="........."
-                  autoComplete="image2"
-                  name="image2"
-                  id="image2"
-                  value={form.image2}
-                  onChange={handleChange}
-                />
-              </CInputGroup>
-              <CInputGroup className="mb-3">
-                <CFormLabel htmlFor="staticEmail" className="col-sm-2 col-form-label">
-                  Banner
-                </CFormLabel>
-                <CFormInput
-                  placeholder="........."
-                  autoComplete="image3"
-                  name="image3"
-                  id="image3"
-                  value={form.image3}
-                  onChange={handleChange}
-                />
-              </CInputGroup>
-              <CInputGroup className="mb-3">
-                <CFormLabel htmlFor="staticEmail" className="col-sm-2 col-form-label">
-                  Deskripsi
-                </CFormLabel>
-                <CFormTextarea
-                  placeholder="........."
-                  autoComplete="desc1"
-                  name="desc1"
-                  id="desc1"
-                  rows={10}
-                  value={form.desc1}
+                  placeholder="Cth : 12/12/2023"
+                  autoComplete="tanggalPembelian"
+                  name="tanggalPembelian"
+                  value={form.tanggalPembelian}
                   onChange={handleChange}
                 />
               </CInputGroup>
@@ -368,4 +395,4 @@ const RekeningScreen = () => {
 
 }
 
-export default RekeningScreen
+export default InvoicePanelScreen

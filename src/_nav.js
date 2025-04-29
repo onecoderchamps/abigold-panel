@@ -28,6 +28,12 @@ const _nav = [
   },
   {
     component: CNavItem,
+    name: 'Invoice',
+    to: '/invoicePanel',
+    icon: <CIcon icon={cilCalculator} customClassName="nav-icon" />
+  },
+  {
+    component: CNavItem,
     name: 'Mitra',
     to: '/mitra',
     icon: <CIcon icon={cilCalculator} customClassName="nav-icon" />

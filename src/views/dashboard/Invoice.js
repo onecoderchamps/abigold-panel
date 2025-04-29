@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { getDocs, collection, addDoc, updateDoc, doc, deleteDoc, getDoc } from "firebase/firestore";
 import { db } from '../../api/firebase';
 
-const database = "order"
+const database = "invoice"
 
 const InvoiceScreen = () => {
   const url = window.location.href;
@@ -57,15 +57,11 @@ const InvoiceScreen = () => {
       <br />
 
       <div style={{ marginBottom: '20px' }}>
-        <strong>Invoice :</strong> {kurir.noInvoice}<br />
+        <strong>Invoice :</strong> {kurir.invoice}<br />
         <strong>Pembeli :</strong> {kurir.namaLengkap}<br />
-        <strong>Tanggal Pembelian :</strong>{kurir === "" ? "" : new Date(kurir.createdAt.seconds * 1000).toLocaleDateString('id-ID', {
-          day: '2-digit',
-          month: 'long',
-          year: 'numeric',
-        })}<br /><br />
+        <strong>Tanggal Pembelian :</strong>{kurir.tanggalPembelian}<br /><br />
         <strong>Alamat Pengiriman :</strong><br />
-        {kurir.namaLengkap} ({kurir.ponsel})<br />
+        {kurir.namaLengkap} ({kurir.phone})<br />
         {kurir.alamat}<br />
       </div>
 
@@ -79,9 +75,9 @@ const InvoiceScreen = () => {
         </thead>
         <tbody>
           <tr>
-            <td style={cellStyle}>{kurir.namaProduct}</td>
+            <td style={cellStyle}>{kurir.item}</td>
             <td style={cellStyle}>1</td>
-            <td style={rightCellStyle}>{kurir?.price?.toLocaleString('id')}</td>
+            <td style={rightCellStyle}>{parseInt(kurir?.total).toLocaleString('id')}</td>
           </tr>
         </tbody>
       </table>
@@ -90,15 +86,15 @@ const InvoiceScreen = () => {
         <tbody>
           <tr>
             <td style={rightCellStyle}>Subtotal Harga Barang:</td>
-            <td style={rightCellStyle}>Rp {kurir?.price?.toLocaleString('id')}</td>
+            <td style={rightCellStyle}>Rp {parseInt(kurir?.total)?.toLocaleString('id')}</td>
           </tr>
           <tr>
             <td style={rightCellStyle}>Total Ongkos Kirim:</td>
-            <td style={rightCellStyle}>Rp {kurir?.biayaKurir?.toLocaleString('id')}</td>
+            <td style={rightCellStyle}>Rp {parseInt(kurir?.ongkir)?.toLocaleString('id')}</td>
           </tr>
           <tr>
             <th style={rightCellStyle}>TOTAL TAGIHAN:</th>
-            <th style={rightCellStyle}>Rp {(kurir?.price + kurir?.biayaKurir)?.toLocaleString('id')}</th>
+            <th style={rightCellStyle}>Rp {(parseInt(kurir?.total) + parseInt(kurir?.ongkir))?.toLocaleString('id')}</th>
           </tr>
           {/* <tr>
             <td style={rightCellStyle}>Metode Pembayaran:</td>

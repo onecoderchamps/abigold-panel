@@ -8,6 +8,8 @@ const BannerScreen = React.lazy(() => import('./views/dashboard/Banner'))
 const CustomerScreen = React.lazy(() => import('./views/dashboard/Customer'))
 const MitraScreen = React.lazy(() => import('./views/dashboard/Mitra'))
 const InvoiceScreen = React.lazy(() => import('./views/dashboard/Invoice'))
+const InvoicePanelScreen = React.lazy(() => import('./views/dashboard/InvoicePanel'))
+
 
 
 
@@ -118,6 +120,9 @@ const routes = [
   { path: '/customer', name: 'customer', element: CustomerScreen },
   { path: '/mitra', name: 'mitra', element: MitraScreen },
   { path: '/invoice', name: 'invoice', element: InvoiceScreen },
+  { path: '/invoicePanel', name: 'invoice', element: InvoicePanelScreen },
+
+  
 
 
 
