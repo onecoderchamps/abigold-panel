@@ -172,11 +172,11 @@ const Dashboard = () => {
               </CButton>
             }
             <div style={{ margin: 20 }}></div>
-            {item.status !== "pending" &&
+            {/* {item.status !== "pending" &&
               <CButton color="green" onClick={() => window.open(`/#/invoice#${item.id}`, '_blank')}>
                 Download Invoice
               </CButton>
-            }
+            } */}
           </CRow>
         </CCardBody>
       </CCard>
