@@ -189,9 +189,7 @@ const InvoicePanelScreen = () => {
                     <CTableHeaderCell className="bg-body-tertiary">#</CTableHeaderCell>
                     <CTableHeaderCell className="bg-body-tertiary">Invoice</CTableHeaderCell>
                     <CTableHeaderCell className="bg-body-tertiary text-center">Nama Pembeli</CTableHeaderCell>
-                    <CTableHeaderCell className="bg-body-tertiary text-center">No KTP</CTableHeaderCell>
                     <CTableHeaderCell className="bg-body-tertiary text-center">No Ponsel</CTableHeaderCell>
-                    <CTableHeaderCell className="bg-body-tertiary text-center">Alamat</CTableHeaderCell>
                     <CTableHeaderCell className="bg-body-tertiary text-center">Nama Product</CTableHeaderCell>
                     <CTableHeaderCell className="bg-body-tertiary text-center">Ongkir</CTableHeaderCell>
                     <CTableHeaderCell className="bg-body-tertiary text-center">Harga Beli</CTableHeaderCell>
@@ -213,12 +211,6 @@ const InvoicePanelScreen = () => {
                       </CTableDataCell>
                       <CTableDataCell className="text-center">
                         <div className="text-body-secondary">{item.phone}</div>
-                      </CTableDataCell>
-                      <CTableDataCell className="text-center">
-                        <div className="text-body-secondary">{item.noKtp}</div>
-                      </CTableDataCell>
-                      <CTableDataCell className="text-center">
-                        <div className="text-body-secondary">{item.alamat}</div>
                       </CTableDataCell>
                       <CTableDataCell className="text-center">
                         <div className="text-body-secondary">{item.item}</div>
