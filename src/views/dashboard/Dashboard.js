@@ -132,19 +132,16 @@ const Dashboard = () => {
           const komisi = userHeader.komisi - userParent.komisi;
           const totalKomisi = product.harga * komisi / 100;
           sendKomisi(id, totalKomisi, userHeader.id);
-          console.log("komisi agent", komisi);
 
           //update untuk bawahAgent
           const komisi2 = userParent.komisi - userDefault.komisi;
           const totalKomisi2 = product.harga * komisi2 / 100;
           sendKomisi(id, totalKomisi2, userParent.id);
-          console.log("komisi agent", komisi2);
 
 
           //update untuk pembeli
           const totalKomisi3 = product.harga * userDefault.komisi / 100;
           sendKomisi(id, totalKomisi3, userDefault.id);
-          console.log("komisi agent", totalKomisi3);
 
 
           readDataFromFirestore()
