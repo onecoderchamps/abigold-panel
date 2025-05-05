@@ -29,7 +29,7 @@ import {
   CTabs,
 } from '@coreui/react'
 
-import { getDocs, collection, addDoc, updateDoc, doc, deleteDoc } from "firebase/firestore";
+import { getDocs, collection, addDoc, updateDoc, doc, deleteDoc, getDoc } from "firebase/firestore";
 import { db } from '../../api/firebase';
 import routes from '../../routes';
 
@@ -43,14 +43,110 @@ const Dashboard = () => {
   const [done, setdone] = useState([]);
   const [cancel, setcancel] = useState([]);
 
+
+  async function readUser(id) {
+    const docRef = doc(db, "users", id);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      const userData = { id: docSnap.id, ...docSnap.data() };
+      return userData;
+    } else {
+      alert("Data tidak ditemukan. Pastikan ID benar.");
+    }
+  }
+
+  async function readOrder(id) {
+    const docRef = doc(db, "order", id);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      const userData = { id: docSnap.id, ...docSnap.data() };
+      return userData;
+    } else {
+      alert("Data tidak ditemukan. Pastikan ID benar.");
+    }
+  }
+
+  async function sendKomisi(id, biaya, idUser) {
+    try {
+      const komisiRef = collection(db, "komisi"); // Referensi ke koleksi 'komisi'
+      await addDoc(komisiRef, {
+        biayaKomisi: parseInt(biaya),
+        createdAt: new Date(),
+        idProduct: id,
+        idUser: idUser,
+        isPayedKomisi: false,
+        updatedAt: new Date(),
+      });
+      console.log("Komisi berhasil ditambahkan");
+    } catch (error) {
+      console.error("Gagal menambahkan komisi:", error);
+    }
+  }
+
   async function tarikKomisi(id, status) {
-    // const docRef = doc(db, "order", id); // Assuming form.id contains the document ID
-    // await updateDoc(docRef, {
-    //   isPayed: true,
-    //   status: status
-    // });
-    
-    readDataFromFirestore()
+    const docRef = doc(db, "order", id); // Assuming form.id contains the document ID
+    await updateDoc(docRef, {
+      isPayed: true,
+      status: status
+    });
+
+    if (status === 3) {
+      const product = await readOrder(id);
+      const userParent = await readUser(product.parent);
+      const userHeader = await readUser(product.header);
+      const userDefault = await readUser(product.idUser);
+
+      ////ini jika dibawah agent langsung
+      if (product.parent === product.header) {
+        //update untuk agent
+        const komisi = userHeader.komisi - userDefault.komisi;
+        const totalKomisi = product.harga * komisi / 100;
+        sendKomisi(id, totalKomisi, userHeader.id);
+
+        //update untuk pembeli
+        const totalKomisi2 = product.harga * userDefault.komisi / 100;
+        sendKomisi(id, totalKomisi2, userDefault.id);
+
+        readDataFromFirestore()
+        return;
+      } else {
+        if (userParent.komisi - userDefault.komisi <= 0) {
+
+          const komisi2 = userHeader.komisi - (userDefault.komisi + 0.5);
+          const totalKomisi2 = product.harga * komisi2 / 100;
+          sendKomisi(id, totalKomisi2, userHeader.id);
+
+          const totalKomisi = product.harga * 0.5 / 100;
+          sendKomisi(id, totalKomisi, userParent.id);
+
+          //update untuk pembeli
+          const totalKomisi3 = product.harga * userDefault.komisi / 100;
+          sendKomisi(id, totalKomisi3, userDefault.id);
+
+          readDataFromFirestore()
+          return;
+        } else {
+          //update untuk agent
+          const komisi = userHeader.komisi - (userParent.komisi - userDefault.komisi);
+          const totalKomisi = product.harga * komisi / 100;
+          sendKomisi(id, totalKomisi, userHeader.id);
+
+          //update untuk bawahAgent
+          const komisi2 = userParent.komisi - userDefault.komisi;
+          const totalKomisi2 = product.harga * komisi2 / 100;
+          sendKomisi(id, totalKomisi2, userParent.id);
+
+          //update untuk pembeli
+          const totalKomisi3 = product.harga * userDefault.komisi / 100;
+          sendKomisi(id, totalKomisi3, userDefault.id);
+
+          readDataFromFirestore()
+          return;
+        }
+      }
+    }
   }
 
   async function readDataFromFirestore() {
@@ -70,7 +166,6 @@ const Dashboard = () => {
     setonSend(filterOnSend);
     setdone(filterSelesai);
     setcancel(filterCancel);
-    console.log(dataArray);
   }
 
   useEffect(() => {
