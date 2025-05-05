@@ -23,30 +23,29 @@ const Register = () => {
   const [pembeli, setpembeli] = useState("");
 
 
-  async function readDataDFromFirestore(a,b) {
+  async function readDataDFromFirestore(a) {
     const dataArray = [];
-    const q = query(collection(db, "product"), where("id", "==", a));
+    const q = query(collection(db, "product"), where("nama", "==", a));
     const querySnapshot = await getDocs(q);
     querySnapshot.forEach((doc) => {
       dataArray.push({ id: doc.id, ...doc.data() });
     });
-    setkurir(dataArray[0]);
-    setpembeli(b);
-
-    // console.log(dataArray);
+    setpembeli(dataArray[0].image1);
   }
 
 
   async function readDataFromFirestore() {
     const dataArray = [];
-    const q = query(collection(db, "order"), where("noInvoice", "==", kode));
+    const q = query(collection(db, "invoice"), where("invoice", "==", kode));
     const querySnapshot = await getDocs(q);
     querySnapshot.forEach((doc) => {
       dataArray.push({ id: doc.id, ...doc.data() });
     });
-    if(dataArray.length !== 0 && dataArray[0].status === "selesai")
+    if(dataArray.length !== 0)
     {
-      readDataDFromFirestore(dataArray[0].idProduct, dataArray[0].namaLengkap)
+      console.log(dataArray[0]);
+      setkurir(dataArray[0]);
+      readDataDFromFirestore(dataArray[0].item)
     }else{
       alert("Kode tidak valid, silahkan masukkan kode yang benar")
     }
@@ -79,15 +78,15 @@ const Register = () => {
                   {kurir !== "" &&
                     <div>
                       <div className="d-flex justify-content-center align-items-center m-5">
-                        <img src={kurir.image1} width={300} height={300} />
+                        <img src={pembeli} width={300} height={300} />
                       </div>
                       Spesifikasi
                       <CRow>
                         <CCol>
                           Product
                           <br />
-                          Berat
                           <br />
+
                           Pembuatan
                           <br />
                           Pembeli Pertama
@@ -95,13 +94,11 @@ const Register = () => {
                           Status
                         </CCol>
                         <CCol className="text-end">
-                          {kurir.nama}
+                          {kurir.item}
                           <br />
-                          {kurir.berat}
+                          {kurir.tanggalPembelian} 
                           <br />
-                          Batch {kurir.batch} Tahun {kurir.pembuatan} 
-                          <br />
-                          {pembeli}
+                          {kurir.namaLengkap}
                           <br />
                           <div className="text-color:success">Terverifikasi</div>
                         </CCol>

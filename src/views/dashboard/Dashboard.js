@@ -44,11 +44,12 @@ const Dashboard = () => {
   const [cancel, setcancel] = useState([]);
 
   async function tarikKomisi(id, status) {
-    const docRef = doc(db, "order", id); // Assuming form.id contains the document ID
-    await updateDoc(docRef, {
-      isPayed: true,
-      status: status
-    });
+    // const docRef = doc(db, "order", id); // Assuming form.id contains the document ID
+    // await updateDoc(docRef, {
+    //   isPayed: true,
+    //   status: status
+    // });
+    
     readDataFromFirestore()
   }
 
@@ -59,10 +60,10 @@ const Dashboard = () => {
       dataArray.push({ id: doc.id, ...doc.data() });
     });
     const filterPayment = dataArray.filter((data) => !data.isPayed)
-    const filterPacking = dataArray.filter((data) => data.isPayed && data.status === "toKurir")
-    const filterOnSend = dataArray.filter((data) => data.isPayed && data.status === "onKurir")
-    const filterSelesai = dataArray.filter((data) => data.isPayed && data.status === "selesai")
-    const filterCancel = dataArray.filter((data) => data.isPayed && data.status === "cancel")
+    const filterPacking = dataArray.filter((data) => data.isPayed && data.status === 1)
+    const filterOnSend = dataArray.filter((data) => data.isPayed && data.status === 2)
+    const filterSelesai = dataArray.filter((data) => data.isPayed && data.status === 3)
+    const filterCancel = dataArray.filter((data) => data.isPayed && data.status === 4)
 
     setpayment(filterPayment);
     setpacking(filterPacking);
@@ -103,9 +104,9 @@ const Dashboard = () => {
               <br />
               {item.kurir}
               <br />
-              Rp {item.biayaKurir.toLocaleString("id-ID")}
+              Rp {item?.hargaOngkir?.toLocaleString("id-ID")}
               <br />
-              {item.alamat}
+              {item.address}
             </CCol>
           </CRow>
           <br />
@@ -121,11 +122,11 @@ const Dashboard = () => {
             </CCol>
             <CCol className="text-end">
               <br />
-              {item.namaLengkap}
+              {item.nama}
               <br />
-              {item.nomorKtp}
+              {item.nik}
               <br />
-              {item.ponsel}
+              {item.phone}
             </CCol>
           </CRow>
           <br />
@@ -141,33 +142,33 @@ const Dashboard = () => {
             </CCol>
             <CCol className="text-end">
               <br />
-              {item.namaProduct}
+              {item.product}
               <br />
-              Rp {(item.price + item.biayaKurir).toLocaleString("id-ID")}
+              Rp {(item.harga + parseFloat(item.hargaOngkir)).toLocaleString("id-ID")}
               {/* <br />
               Rp {item.biayaDonasi.toLocaleString("id-ID")} */}
             </CCol>
           </CRow>
           <br></br>
-          {item.status === "pending" &&
-            <CButton className="m-1" color="cancel" onClick={() => tarikKomisi(item.id, "cancel")}>
+          {item.status === 0 &&
+            <CButton className="m-1" color="cancel" onClick={() => tarikKomisi(item.id, 4)}>
               Cancel
             </CButton>
           }
-          {item.status === "pending" &&
-            <CButton color="primary" onClick={() => tarikKomisi(item.id, "toKurir")}>
+          {item.status === 0 &&
+            <CButton color="primary" onClick={() => tarikKomisi(item.id, 1)}>
               Lanjutkan ke Packing
             </CButton>
           }
-          {item.status === "toKurir" &&
-            <CButton color="primary" onClick={() => tarikKomisi(item.id, "onKurir")}>
+          {item.status === 1 &&
+            <CButton color="primary" onClick={() => tarikKomisi(item.id, 2)}>
               Lanjutkan ke Kurir
             </CButton>
           }
           <CRow>
 
-            {item.status === "onKurir" &&
-              <CButton color="primary" onClick={() => tarikKomisi(item.id, "selesai")}>
+            {item.status === 2 &&
+              <CButton color="primary" onClick={() => tarikKomisi(item.id, 3)}>
                 Selesai
               </CButton>
             }
