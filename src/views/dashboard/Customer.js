@@ -20,16 +20,17 @@ import {
     CFormLabel,
     CFormTextarea
 } from '@coreui/react'
-import { getDocs, collection, addDoc, updateDoc, doc, deleteDoc, where, query } from "firebase/firestore";
+import { getDocs, collection, addDoc, updateDoc, doc, deleteDoc, where, query, orderBy } from "firebase/firestore";
 import { db } from '../../api/firebase';
 
 const database = "users"
 
-const CustomerScreen = () => {
+const MitraScreen = () => {
 
     const [kurir, setkurir] = useState([]);
     const [visible, setVisible] = useState(false)
     const [visibleDelete, setvisibleDelete] = useState(false)
+    const [komisi, setKomisi] = useState(0);
 
     /////modal
 
@@ -48,7 +49,8 @@ const CustomerScreen = () => {
             image2: "",
             image3: "",
             harga: 0,
-            bonus: 0
+            bonus: 0,
+            codeReferal: ''
         }
     )
 
@@ -64,13 +66,37 @@ const CustomerScreen = () => {
 
     async function readDataFromFirestore() {
         const dataArray = [];
-        const q = query(collection(db, database), where("isAgent", "==", false));
+        const q = query(collection(db, database), where('isActive', '==', false));
         const querySnapshot = await getDocs(q);
         querySnapshot.forEach((doc) => {
             dataArray.push({ id: doc.id, ...doc.data() });
         });
         setkurir(dataArray);
-        console.log(dataArray);
+        // console.log(dataArray);
+    }
+
+    async function readKomisiFirestore(e) {
+        const dataArray = [];
+        const q = query(collection(db, "komisi"), where('idUser', '==', e.id), where('isPayedKomisi', '==', false), orderBy('createdAt', 'asc'));
+        const querySnapshot = await getDocs(q);
+        querySnapshot.forEach((doc) => {
+            dataArray.push({ id: doc.id, ...doc.data() });
+        });
+        const totalBiaya = dataArray.reduce((total, current) => total + current.biayaKomisi, 0);
+        setKomisi(totalBiaya)
+    }
+
+    async function tarikKomisi() {
+        const q = query(collection(db, "komisi"), where('idUser', '==', form.id), where('isPayedKomisi', '==', false), orderBy('createdAt', 'asc'));
+        const querySnapshot = await getDocs(q);
+        querySnapshot.forEach(async (docs) => {
+            const docRef = doc(db, "komisi", docs.id); // Assuming form.id contains the document ID
+            await updateDoc(docRef, {
+                isPayedKomisi: true,
+            });
+        });
+        setVisible(false)
+        readDataFromFirestore()
     }
 
     const OpenAddItem = () => {
@@ -83,9 +109,10 @@ const CustomerScreen = () => {
     const OpenUpdateItem = (e) => {
         setVisible(!visible)
         setForm({
-            title: "Update Data",
+            title: "Detail Data",
             ...e
         })
+        readKomisiFirestore(e)
     }
 
     const OpenDeleteItem = (e) => {
@@ -121,8 +148,7 @@ const CustomerScreen = () => {
             try {
                 const docRef = doc(db, database, e.id); // Assuming form.id contains the document ID
                 await updateDoc(docRef, {
-                    needReview: false,
-                    isAgent: false
+                    isActive: false
                 });
                 console.log("Data berhasil ditambahkan");
             } catch (error) {
@@ -132,7 +158,7 @@ const CustomerScreen = () => {
             try {
                 const docRef = doc(db, database, e.id); // Assuming form.id contains the document ID
                 await updateDoc(docRef, {
-                    isAgent: true
+                    isActive: true
                 });
                 // console.log("Data berhasil diperbarui");
             } catch (error) {
@@ -160,7 +186,8 @@ const CustomerScreen = () => {
                                         <CTableHeaderCell className="bg-body-tertiary text-left">
                                             Nama
                                         </CTableHeaderCell>
-                                        <CTableHeaderCell className="bg-body-tertiary text-center">No Ktp</CTableHeaderCell>
+                                        <CTableHeaderCell className="bg-body-tertiary text-left">ID Mitra</CTableHeaderCell>
+                                        <CTableHeaderCell className="bg-body-tertiary text-left">Phone</CTableHeaderCell>
                                         <CTableHeaderCell className="bg-body-tertiary text-center">Alamat</CTableHeaderCell>
                                         <CTableHeaderCell className="bg-body-tertiary text-center">Permintaan</CTableHeaderCell>
                                     </CTableRow>
@@ -172,24 +199,21 @@ const CustomerScreen = () => {
                                                 <div className="text-body-secondary">{index + 1}</div>
                                             </CTableDataCell>
                                             <CTableDataCell className="text-left">
-                                                <div className="text-body-secondary">{item.fullname}</div>
+                                                <div className="text-body-secondary">{item.name}</div>
+                                            </CTableDataCell>
+                                            <CTableDataCell className="text-left">
+                                                <div className="text-body-secondary">{item.id}</div>
+                                            </CTableDataCell>
+                                            <CTableDataCell className="text-left">
+                                                <div className="text-body-secondary">{item.phone}</div>
                                             </CTableDataCell>
                                             <CTableDataCell className="text-center">
-                                                <div className="text-body-secondary">{item.nomorKtp}</div>
-                                            </CTableDataCell>
-                                            <CTableDataCell className="text-center">
-                                                <div className="text-body-secondary">{item.alamat}</div>
+                                                <div className="text-body-secondary">{item.address}</div>
                                             </CTableDataCell>
                                             <CTableDataCell className="text-center">
                                                 <CButtonGroup role="group">
-                                                    {item.needReview !== undefined &&
-                                                        <>
-                                                            {item.needReview !== false &&
-                                                                <><CButton variant="outline" color="danger" onClick={() => approveUpdate(item, 'Tolak')}>Tolak</CButton><CButton variant="outline" color="success" onClick={() => approveUpdate(item, 'Terima')}>Ubah ke Mitra</CButton></>
-                                                            }
-                                                        </>
-                                                    }
-                                                    <CButton variant="outline" color="success" onClick={() => OpenUpdateItem(item)}>Lihat Member</CButton>
+                                                    <CButton variant="outline" color="info" onClick={() => approveUpdate(item, '')}>Aktifkan Mitra</CButton>
+                                                    <CButton variant="outline" color="success" onClick={() => OpenUpdateItem(item)}>Lihat Komisi</CButton>
                                                 </CButtonGroup>
                                             </CTableDataCell>
                                         </CTableRow>
@@ -213,56 +237,15 @@ const CustomerScreen = () => {
                         <CForm>
                             <CInputGroup className="mb-3">
                                 <CFormLabel htmlFor="staticEmail" className="col-sm-2 col-form-label">
-                                    Nama Lengkap
-                                </CFormLabel>
-                                <CFormInput
-                                    placeholder="........."
-                                    autoComplete="nama"
-                                    name="nama"
-                                    value={form.namaKtp}
-                                    onChange={handleChange}
-                                    disabled={true}
-                                />
-                            </CInputGroup>
-                            <CInputGroup className="mb-3">
-                                <CFormLabel htmlFor="staticEmail" className="col-sm-2 col-form-label">
-                                    NIK
-                                </CFormLabel>
-                                <CFormInput
-                                    placeholder="........."
-                                    autoComplete="nomorNik"
-                                    name="nomorNik"
-                                    value={form.nomorNik}
-                                    onChange={handleChange}
-                                    disabled
-                                />
-                            </CInputGroup>
-                            <CInputGroup className="mb-3">
-                                <CFormLabel htmlFor="staticEmail" className="col-sm-2 col-form-label">
-                                    Nomor Ponsel
+                                    Komisi
                                 </CFormLabel>
                                 <CFormInput
                                     placeholder="........."
                                     autoComplete="phonenumber"
                                     name="phonenumber"
-                                    value={form.phonenumber}
+                                    value={"Rp " + komisi.toLocaleString("id-ID")}
                                     onChange={handleChange}
                                     disabled
-                                />
-                            </CInputGroup>
-                            <CInputGroup className="mb-3">
-                                <CFormLabel htmlFor="staticEmail" className="col-sm-2 col-form-label">
-                                    Alamat
-                                </CFormLabel>
-                                <CFormTextarea
-                                    placeholder="........."
-                                    autoComplete="alamat"
-                                    name="alamat"
-                                    id="alamat"
-                                    rows={2}
-                                    value={form.alamat}
-                                    disabled
-                                    onChange={handleChange}
                                 />
                             </CInputGroup>
                         </CForm>
@@ -271,6 +254,7 @@ const CustomerScreen = () => {
                         <CButton color="secondary" onClick={() => setVisible(false)}>
                             Close
                         </CButton>
+                        <CButton color="primary" onClick={tarikKomisi}>Tarik Semua Komisi</CButton>
                     </CModalFooter>
                 </CModal>
                 <CModal
@@ -299,4 +283,4 @@ const CustomerScreen = () => {
 
 }
 
-export default CustomerScreen
+export default MitraScreen

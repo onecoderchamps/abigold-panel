@@ -66,7 +66,7 @@ const MitraScreen = () => {
 
     async function readDataFromFirestore() {
         const dataArray = [];
-        const q = query(collection(db, database), where("isAgent", "==", true));
+        const q = query(collection(db, database), where('isActive', '==', true));
         const querySnapshot = await getDocs(q);
         querySnapshot.forEach((doc) => {
             dataArray.push({ id: doc.id, ...doc.data() });
@@ -77,7 +77,7 @@ const MitraScreen = () => {
 
     async function readKomisiFirestore(e) {
         const dataArray = [];
-        const q = query(collection(db, "order"), where('codeReferal', '==', e.codeReferal), where('isPayedKomisi', '==', false), orderBy('createdAt', 'asc'));
+        const q = query(collection(db, "komisi"), where('idUser', '==', e.id), where('isPayedKomisi', '==', false), orderBy('createdAt', 'asc'));
         const querySnapshot = await getDocs(q);
         querySnapshot.forEach((doc) => {
             dataArray.push({ id: doc.id, ...doc.data() });
@@ -87,10 +87,10 @@ const MitraScreen = () => {
     }
 
     async function tarikKomisi() {
-        const q = query(collection(db, "order"), where('codeReferal', '==', form.codeReferal), where('isPayedKomisi', '==', false), orderBy('createdAt', 'asc'));
+        const q = query(collection(db, "komisi"), where('idUser', '==', form.id), where('isPayedKomisi', '==', false), orderBy('createdAt', 'asc'));
         const querySnapshot = await getDocs(q);
         querySnapshot.forEach(async (docs) => {
-            const docRef = doc(db, "order", docs.id); // Assuming form.id contains the document ID
+            const docRef = doc(db, "komisi", docs.id); // Assuming form.id contains the document ID
             await updateDoc(docRef, {
                 isPayedKomisi: true,
             });
@@ -148,8 +148,7 @@ const MitraScreen = () => {
             try {
                 const docRef = doc(db, database, e.id); // Assuming form.id contains the document ID
                 await updateDoc(docRef, {
-                    needReview: false,
-                    isAgent: false
+                    isActive: false
                 });
                 console.log("Data berhasil ditambahkan");
             } catch (error) {
@@ -159,7 +158,7 @@ const MitraScreen = () => {
             try {
                 const docRef = doc(db, database, e.id); // Assuming form.id contains the document ID
                 await updateDoc(docRef, {
-                    isAgent: true
+                    isActive: true
                 });
                 // console.log("Data berhasil diperbarui");
             } catch (error) {
@@ -188,8 +187,8 @@ const MitraScreen = () => {
                                             Nama
                                         </CTableHeaderCell>
                                         <CTableHeaderCell className="bg-body-tertiary text-left">ID Mitra</CTableHeaderCell>
-                                        <CTableHeaderCell className="bg-body-tertiary text-left">Kode Referal</CTableHeaderCell>
-                                        <CTableHeaderCell className="bg-body-tertiary text-center">No Ktp</CTableHeaderCell>
+                                        <CTableHeaderCell className="bg-body-tertiary text-left">Phone</CTableHeaderCell>
+                                        <CTableHeaderCell className="bg-body-tertiary text-center">Alamat</CTableHeaderCell>
                                         <CTableHeaderCell className="bg-body-tertiary text-center">Permintaan</CTableHeaderCell>
                                     </CTableRow>
                                 </CTableHead>
@@ -200,28 +199,22 @@ const MitraScreen = () => {
                                                 <div className="text-body-secondary">{index + 1}</div>
                                             </CTableDataCell>
                                             <CTableDataCell className="text-left">
-                                                <div className="text-body-secondary">{item.fullname}</div>
+                                                <div className="text-body-secondary">{item.name}</div>
                                             </CTableDataCell>
                                             <CTableDataCell className="text-left">
-                                                <div className="text-body-secondary">{item.uid}</div>
+                                                <div className="text-body-secondary">{item.id}</div>
                                             </CTableDataCell>
                                             <CTableDataCell className="text-left">
-                                                <div className="text-body-secondary">{item.codeReferal}</div>
+                                                <div className="text-body-secondary">{item.phone}</div>
                                             </CTableDataCell>
                                             <CTableDataCell className="text-center">
-                                                <div className="text-body-secondary">{item.nomorKtp}</div>
+                                                <div className="text-body-secondary">{item.address}</div>
                                             </CTableDataCell>
                                             <CTableDataCell className="text-center">
-                                                {item.needReview !== undefined &&
-                                                    <>
-                                                        {item.needReview !== false &&
-                                                            <CButtonGroup role="group">
-                                                                <CButton variant="outline" color="danger" onClick={() => approveUpdate(item, 'Tolak')}>Batalkan Mitra</CButton>
-                                                                <CButton variant="outline" color="success" onClick={() => OpenUpdateItem(item)}>Lihat Komisi</CButton>
-                                                            </CButtonGroup>
-                                                        }
-                                                    </>
-                                                }
+                                                <CButtonGroup role="group">
+                                                    <CButton variant="outline" color="danger" onClick={() => approveUpdate(item, 'Tolak')}>Batalkan Mitra</CButton>
+                                                    <CButton variant="outline" color="success" onClick={() => OpenUpdateItem(item)}>Lihat Komisi</CButton>
+                                                </CButtonGroup>
                                             </CTableDataCell>
                                         </CTableRow>
                                     ))}
@@ -244,45 +237,6 @@ const MitraScreen = () => {
                         <CForm>
                             <CInputGroup className="mb-3">
                                 <CFormLabel htmlFor="staticEmail" className="col-sm-2 col-form-label">
-                                    Nama Lengkap
-                                </CFormLabel>
-                                <CFormInput
-                                    placeholder="........."
-                                    autoComplete="nama"
-                                    name="nama"
-                                    value={form.namaKtp}
-                                    onChange={handleChange}
-                                    disabled={true}
-                                />
-                            </CInputGroup>
-                            <CInputGroup className="mb-3">
-                                <CFormLabel htmlFor="staticEmail" className="col-sm-2 col-form-label">
-                                    NIK
-                                </CFormLabel>
-                                <CFormInput
-                                    placeholder="........."
-                                    autoComplete="nomorNik"
-                                    name="nomorNik"
-                                    value={form.nomorNik}
-                                    onChange={handleChange}
-                                    disabled
-                                />
-                            </CInputGroup>
-                            <CInputGroup className="mb-3">
-                                <CFormLabel htmlFor="staticEmail" className="col-sm-2 col-form-label">
-                                    Nomor Ponsel
-                                </CFormLabel>
-                                <CFormInput
-                                    placeholder="........."
-                                    autoComplete="phonenumber"
-                                    name="phonenumber"
-                                    value={form.phonenumber}
-                                    onChange={handleChange}
-                                    disabled
-                                />
-                            </CInputGroup>
-                            <CInputGroup className="mb-3">
-                                <CFormLabel htmlFor="staticEmail" className="col-sm-2 col-form-label">
                                     Komisi
                                 </CFormLabel>
                                 <CFormInput
@@ -292,21 +246,6 @@ const MitraScreen = () => {
                                     value={"Rp " + komisi.toLocaleString("id-ID")}
                                     onChange={handleChange}
                                     disabled
-                                />
-                            </CInputGroup>
-                            <CInputGroup className="mb-3">
-                                <CFormLabel htmlFor="staticEmail" className="col-sm-2 col-form-label">
-                                    Alamat
-                                </CFormLabel>
-                                <CFormTextarea
-                                    placeholder="........."
-                                    autoComplete="alamat"
-                                    name="alamat"
-                                    id="alamat"
-                                    rows={2}
-                                    value={form.alamat}
-                                    disabled
-                                    onChange={handleChange}
                                 />
                             </CInputGroup>
                         </CForm>
