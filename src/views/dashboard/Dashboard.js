@@ -87,10 +87,13 @@ const Dashboard = () => {
 
   async function tarikKomisi(id, status) {
     const docRef = doc(db, "order", id); // Assuming form.id contains the document ID
-    await updateDoc(docRef, {
-      isPayed: true,
-      status: status
-    });
+    if (status !== 3) {
+      await updateDoc(docRef, {
+        isPayed: true,
+        status: status
+      });
+      readDataFromFirestore();
+    }
 
     if (status === 3) {
       const product = await readOrder(id);
