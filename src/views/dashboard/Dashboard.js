@@ -41,6 +41,7 @@ const Dashboard = () => {
   const [packing, setpacking] = useState([]);
   const [onSend, setonSend] = useState([]);
   const [done, setdone] = useState([]);
+  const [doneAll, setdoneAll] = useState([]);
   const [cancel, setcancel] = useState([]);
 
 
@@ -87,15 +88,16 @@ const Dashboard = () => {
 
   async function tarikKomisi(id, status) {
     const docRef = doc(db, "order", id); // Assuming form.id contains the document ID
-    if (status !== 3) {
+    if (status !== 4) {
       await updateDoc(docRef, {
-        isPayed: true,
         status: status
       });
       readDataFromFirestore();
     }
 
-    if (status === 3) {
+    const idJaswa = "gVpSFD6mnyb8JDBSXm3a"
+
+    if (status === 4) {
       const product = await readOrder(id);
       const userParent = await readUser(product.parent);
       const userHeader = await readUser(product.header);
@@ -104,37 +106,57 @@ const Dashboard = () => {
       ////ini jika dibawah agent langsung
       if (product.parent === product.header) {
         //update untuk agent
-        const komisi = userHeader.komisi - userDefault.komisi;
+        const komisi = userHeader.komisi - (userDefault.komisi + 0.25);
         const totalKomisi = product.harga * komisi / 100;
         sendKomisi(id, totalKomisi, userHeader.id);
+
+        //update jaswa
+        const totalKomisiJ = product.harga * 0.25 / 100;
+        sendKomisi(id, totalKomisiJ, idJaswa);
 
         //update untuk pembeli
         const totalKomisi2 = product.harga * userDefault.komisi / 100;
         sendKomisi(id, totalKomisi2, userDefault.id);
 
+        await updateDoc(docRef, {
+          isPayed: true
+        });
         readDataFromFirestore()
         return;
       } else {
         if (userParent.komisi - userDefault.komisi <= 0) {
 
-          const komisi2 = userHeader.komisi - (userDefault.komisi + 0.5);
+          //update untuk agent
+          const komisi2 = userHeader.komisi - (userDefault.komisi + 0.5 + 0.25);
           const totalKomisi2 = product.harga * komisi2 / 100;
           sendKomisi(id, totalKomisi2, userHeader.id);
 
+          //update untuk bawahAgent
           const totalKomisi = product.harga * 0.5 / 100;
           sendKomisi(id, totalKomisi, userParent.id);
+
+          //update jaswa
+          const totalKomisiJ = product.harga * 0.25 / 100;
+          sendKomisi(id, totalKomisiJ, idJaswa);
 
           //update untuk pembeli
           const totalKomisi3 = product.harga * userDefault.komisi / 100;
           sendKomisi(id, totalKomisi3, userDefault.id);
 
+          await updateDoc(docRef, {
+            isPayed: true
+          });
           readDataFromFirestore()
           return;
         } else {
           //update untuk agent
-          const komisi = userHeader.komisi - userParent.komisi;
+          const komisi = userHeader.komisi - (userParent.komisi + 0.25);
           const totalKomisi = product.harga * komisi / 100;
           sendKomisi(id, totalKomisi, userHeader.id);
+
+          //update jaswa
+          const totalKomisiJ = product.harga * 0.25 / 100;
+          sendKomisi(id, totalKomisiJ, idJaswa);
 
           //update untuk bawahAgent
           const komisi2 = userParent.komisi - userDefault.komisi;
@@ -146,7 +168,9 @@ const Dashboard = () => {
           const totalKomisi3 = product.harga * userDefault.komisi / 100;
           sendKomisi(id, totalKomisi3, userDefault.id);
 
-
+          await updateDoc(docRef, {
+            isPayed: true
+          });
           readDataFromFirestore()
           return;
         }
@@ -160,16 +184,18 @@ const Dashboard = () => {
     querySnapshot.forEach((doc) => {
       dataArray.push({ id: doc.id, ...doc.data() });
     });
-    const filterPayment = dataArray.filter((data) => !data.isPayed)
-    const filterPacking = dataArray.filter((data) => data.isPayed && data.status === 1)
-    const filterOnSend = dataArray.filter((data) => data.isPayed && data.status === 2)
+    const filterPayment = dataArray.filter((data) => data.status === 0)
+    const filterPacking = dataArray.filter((data) => !data.isPayed && data.status === 1)
+    const filterOnSend = dataArray.filter((data) => !data.isPayed && data.status === 2)
+    const filterSelesaiKomisi = dataArray.filter((data) => !data.isPayed && data.status === 3)
     const filterSelesai = dataArray.filter((data) => data.isPayed && data.status === 3)
-    const filterCancel = dataArray.filter((data) => data.isPayed && data.status === 4)
+    const filterCancel = dataArray.filter((data) => !data.isPayed && data.status === 4)
 
     setpayment(filterPayment);
     setpacking(filterPacking);
     setonSend(filterOnSend);
-    setdone(filterSelesai);
+    setdone(filterSelesaiKomisi);
+    setdoneAll(filterSelesai);
     setcancel(filterCancel);
   }
 
@@ -273,11 +299,11 @@ const Dashboard = () => {
               </CButton>
             }
             <div style={{ margin: 20 }}></div>
-            {/* {item.status !== "pending" &&
-              <CButton color="green" onClick={() => window.open(`/#/invoice#${item.id}`, '_blank')}>
-                Download Invoice
+            {item.status === 3 && !item.isPayed &&
+              <CButton color="primary" onClick={() => tarikKomisi(item.id, 4)}>
+                Kirim Komisi
               </CButton>
-            } */}
+            }
           </CRow>
         </CCardBody>
       </CCard>
@@ -308,8 +334,10 @@ const Dashboard = () => {
                     <CBadge color="danger">{onSend.length}</CBadge>
                   }
                 </CTab>
-                <CTab aria-controls="profile-tab-pane" itemKey={4}>Selesai</CTab>
-                <CTab aria-controls="contact-tab-pane" itemKey={5}>Batal</CTab>
+                <CTab aria-controls="profile-tab-pane" itemKey={4}>Send Komisi</CTab>
+                <CTab aria-controls="profile-tab-pane" itemKey={5}>Selesai</CTab>
+
+                <CTab aria-controls="contact-tab-pane" itemKey={6}>Batal</CTab>
               </CTabList>
               <CTabContent>
                 <CTabPanel className="p-3" aria-labelledby="home-tab-pane" itemKey={1}>
@@ -349,6 +377,15 @@ const Dashboard = () => {
                   </CRow>
                 </CTabPanel>
                 <CTabPanel className="p-3" aria-labelledby="contact-tab-pane" itemKey={5}>
+                  <CRow className="p-5">
+                    {doneAll.map((item, index) => {
+                      return (
+                        File(item, index)
+                      )
+                    })}
+                  </CRow>
+                </CTabPanel>
+                <CTabPanel className="p-3" aria-labelledby="contact-tab-pane" itemKey={6}>
                   <CRow className="p-5">
                     {cancel.map((item, index) => {
                       return (
