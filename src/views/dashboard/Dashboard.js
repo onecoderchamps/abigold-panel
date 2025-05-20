@@ -106,7 +106,7 @@ const Dashboard = () => {
       ////ini jika dibawah agent langsung
       if (product.parent === product.header) {
         //update untuk agent
-        const komisi = userHeader.komisi - (userDefault.komisi + 0.25);
+        const komisi = userHeader.komisi - (userDefault.komisi);
         const totalKomisi = product.harga * komisi / 100;
         sendKomisi(id, totalKomisi, userHeader.id);
 
@@ -127,7 +127,7 @@ const Dashboard = () => {
         if (userParent.komisi - userDefault.komisi <= 0) {
 
           //update untuk agent
-          const komisi2 = userHeader.komisi - (userDefault.komisi + 0.5 + 0.25);
+          const komisi2 = userHeader.komisi - (userDefault.komisi + 0.5);
           const totalKomisi2 = product.harga * komisi2 / 100;
           sendKomisi(id, totalKomisi2, userHeader.id);
 
@@ -150,7 +150,7 @@ const Dashboard = () => {
           return;
         } else {
           //update untuk agent
-          const komisi = userHeader.komisi - (userParent.komisi + 0.25);
+          const komisi = userHeader.komisi - (userParent.komisi);
           const totalKomisi = product.harga * komisi / 100;
           sendKomisi(id, totalKomisi, userHeader.id);
 

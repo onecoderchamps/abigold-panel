@@ -20,7 +20,7 @@ import {
     CFormLabel,
     CFormTextarea
 } from '@coreui/react'
-import { getDocs, collection, addDoc, updateDoc, doc, deleteDoc, where, query, orderBy } from "firebase/firestore";
+import { getDocs, collection, addDoc, updateDoc, doc, deleteDoc, where, query, orderBy, getDoc } from "firebase/firestore";
 import { db } from '../../api/firebase';
 
 const database = "users"
@@ -28,6 +28,7 @@ const database = "users"
 const MitraScreen = () => {
 
     const [kurir, setkurir] = useState([]);
+    const [allKomisi, setAllKomisi] = useState([]);
     const [visible, setVisible] = useState(false)
     const [visibleDelete, setvisibleDelete] = useState(false)
     const [komisi, setKomisi] = useState(0);
@@ -79,10 +80,28 @@ const MitraScreen = () => {
         const dataArray = [];
         const q = query(collection(db, "komisi"), where('idUser', '==', e.id), where('isPayedKomisi', '==', false), orderBy('createdAt', 'asc'));
         const querySnapshot = await getDocs(q);
-        querySnapshot.forEach((doc) => {
-            dataArray.push({ id: doc.id, ...doc.data() });
-        });
+        for (const docSnap of querySnapshot.docs) {
+            const komisiData = { id: docSnap.id, ...docSnap.data() };
+            let orderData = null;
+
+            // Ambil order berdasarkan idProduct (diasumsikan sebagai ID dokumen pada koleksi 'order')
+            if (komisiData.idProduct) {
+                const orderRef = doc(db, "order", komisiData.idProduct);
+                const orderSnap = await getDoc(orderRef);
+                if (orderSnap.exists()) {
+                    orderData = { id: orderSnap.id, ...orderSnap.data() };
+                }
+            }
+
+            dataArray.push({
+                ...komisiData,
+                order: orderData // nested order data
+            });
+        }
         const totalBiaya = dataArray.reduce((total, current) => total + current.biayaKomisi, 0);
+        console.log(totalBiaya)
+        console.log(dataArray)
+        setAllKomisi(dataArray)
         setKomisi(totalBiaya)
     }
 
@@ -237,7 +256,7 @@ const MitraScreen = () => {
                         <CForm>
                             <CInputGroup className="mb-3">
                                 <CFormLabel htmlFor="staticEmail" className="col-sm-2 col-form-label">
-                                    Komisi
+                                    Total Pendapatan
                                 </CFormLabel>
                                 <CFormInput
                                     placeholder="........."
@@ -249,6 +268,51 @@ const MitraScreen = () => {
                                 />
                             </CInputGroup>
                         </CForm>
+                        <CCardBody>
+                            {/* <CButton color="info" variant="outline" onClick={OpenAddItem}>Tambah</CButton> */}
+                            <div className="m-2"></div>
+                            <CTable striped align="middle" className="mb-0 border" hover responsive>
+                                <CTableHead className="text-nowrap">
+                                    <CTableRow>
+                                        <CTableHeaderCell className="bg-body-tertiary">#</CTableHeaderCell>
+                                        <CTableHeaderCell className="bg-body-tertiary text-left">
+                                            Nama Pembeli
+                                        </CTableHeaderCell>
+                                        <CTableHeaderCell className="bg-body-tertiary text-left">Total Pembelian</CTableHeaderCell>
+                                        <CTableHeaderCell className="bg-body-tertiary text-left">Pendapatan</CTableHeaderCell>
+                                        <CTableHeaderCell className="bg-body-tertiary text-center">Status Pendapatan</CTableHeaderCell>
+                                    </CTableRow>
+                                </CTableHead>
+                                <CTableBody>
+                                    {allKomisi.map((item, index) => (
+                                        <CTableRow v-for="item in tableItems" key={index}>
+                                            <CTableDataCell className="text-left">
+                                                <div className="text-body-secondary">{index + 1}</div>
+                                            </CTableDataCell>
+                                            <CTableDataCell className="text-left">
+                                                <div className="text-body-secondary">{item.order.nama}</div>
+                                            </CTableDataCell>
+                                            <CTableDataCell className="text-left">
+                                                <div className="text-body-secondary">Rp {item.order.harga.toLocaleString('id')}</div>
+                                            </CTableDataCell>
+                                            <CTableDataCell className="text-left">
+                                                <div className="text-body-secondary">Rp {item.biayaKomisi.toLocaleString('id')}</div>
+                                            </CTableDataCell>
+                                            {Number(((item.biayaKomisi / item.order.harga) * 100).toFixed(2)) === 0.25 &&
+                                                <CTableDataCell className="text-center">
+                                                    <div className="text-body-secondary">Royalty</div>
+                                                </CTableDataCell>
+                                            }
+                                            {Number(((item.biayaKomisi / item.order.harga) * 100).toFixed(2)) !== 0.25 &&
+                                                <CTableDataCell className="text-center">
+                                                    <div className="text-body-secondary">Komisi</div>
+                                                </CTableDataCell>
+                                            }
+                                        </CTableRow>
+                                    ))}
+                                </CTableBody>
+                            </CTable>
+                        </CCardBody>
                     </CModalBody>
                     <CModalFooter>
                         <CButton color="secondary" onClick={() => setVisible(false)}>
