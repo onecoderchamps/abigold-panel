@@ -67,7 +67,7 @@ const InvoiceScreen = () => {
       {/* Logo + Header Invoice */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
       <div style={{ textAlign: 'right' }}>
-          <img src="https://www.abigold.co.id/wp-content/uploads/2025/03/Abi-1-1-200x106.png" alt="ABI Logo" style={{ width: '150px', marginBottom: '10px' }} />
+          <img src="https://abigold.co.id/Abi.png" alt="ABI Logo" style={{ width: '150px', marginBottom: '10px' }} />
         </div>
         
         {/* Logo dan Teks di kanan */}
